@@ -78,10 +78,16 @@ class LivroController {
     }
   };
 
-  static listarLivroPorEditora = async (req, res, next) => {
+  static listarLivroPorFiltro = async (req, res, next) => {
     try {
-      const editora = req.query.editora;
-      const livroPorEditora = await livros.find({ "editora": editora });
+      const {editora, titulo} = req.query;
+
+      const busca = {};
+      
+      if (editora)  busca.editora = editora;
+      if (titulo) busca.titulo = titulo;
+
+      const livroPorEditora = await livros.find(busca);
       res.status(200).send(livroPorEditora);
     
     } catch (error) {
