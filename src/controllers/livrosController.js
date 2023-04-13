@@ -104,7 +104,7 @@ async function processaBusca(paramentros) {
 
   let busca = {};
 
-  if (editora) busca.editora = editora;
+  if (editora) busca.editora = {$regex: editora, $options: "i"};
 
   if (titulo) busca.titulo = { $regex: titulo, $options: "i" };
 
