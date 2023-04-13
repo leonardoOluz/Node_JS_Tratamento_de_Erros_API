@@ -1,4 +1,4 @@
-import {livros} from "../models/index.js";
+import { autores, livros } from "../models/index.js";
 import NaoEncontrado from "../erros/NaoEncontrado.js";
 
 class LivroController {
@@ -52,11 +52,11 @@ class LivroController {
 
       if (updateLivroPorId !== null) {
         res.status(200).send({ message: "Livro atualizado com sucesso" });
-        
+
       } else {
         next(new NaoEncontrado("Id do livro não localizado."));
       }
-    
+
     } catch (error) {
       next(error);
     }
@@ -68,7 +68,7 @@ class LivroController {
       const deleteLivroPorId = await livros.findByIdAndDelete(id);
       if (deleteLivroPorId !== null) {
         res.status(200).send({ message: "Livro removido com sucesso" });
-        
+
       } else {
         next(new NaoEncontrado("Id do livro não encontrado."));
       }
@@ -80,29 +80,43 @@ class LivroController {
 
   static listarLivroPorFiltro = async (req, res, next) => {
     try {
-      const busca = processaBusca(req.query);
+      const busca = await processaBusca(req.query);
 
-      const livroPorEditora = await livros.find(busca);
+      const livroPorEditora = await livros
+        .find(busca)
+        .populate("autor");
       res.status(200).send(livroPorEditora);
-    
+
     } catch (error) {
       next(error);
     }
   };
 }
 
-function processaBusca(paramentros){
+async function processaBusca(paramentros) {
 
-  const {editora, titulo, minPaginas,maxPaginas} = paramentros;
+  const { editora, titulo, minPaginas, maxPaginas, nomeAutor } = paramentros;
 
   const busca = {};
-      
-  if (editora)  busca.editora = editora;
-  if (titulo) busca.titulo = {$regex: titulo, $options: "i"};
+
+  if (editora) busca.editora = editora;
+
+  if (titulo) busca.titulo = { $regex: titulo, $options: "i" };
+
   if (minPaginas || maxPaginas) busca.numeroPaginas = {};
-  
+  // gte = Greater than or equal = Maior ou igual que
   if (minPaginas) busca.numeroPaginas.$gte = minPaginas;
-  if (maxPaginas) busca.numeroPaginas.$lte = maxPaginas;  
+  // lte = Less than or equal = Menor ou igual que
+  if (maxPaginas) busca.numeroPaginas.$lte = maxPaginas;
+
+  if (nomeAutor) {
+    const autor = await autores.findOne({ nome: nomeAutor });
+
+    const autorId = autor._id;
+
+    busca.autor = autorId;
+
+  }
 
   return busca;
 
